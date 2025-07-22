@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Loan Data Cleaner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      padding: 10px;
+      font-family: monospace;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    pre {
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Loan Data Cleaning Tool</h1>
+
+  <p>Paste your loan JSON data below:</p>
+  <textarea id="inputData" placeholder='[{"Dependents": "3+", "LoanAmount": "", "Loan_Amount_Term": "", "Credit_History": ""}]'></textarea>
+  <br>
+  <button onclick="cleanData()">Clean Data</button>
+
+  <h2>Cleaned Output:</h2>
+  <pre id="outputData"></pre>
+
+  <script>
+    function cleanData() {
+      const input = document.getElementById("inputData").value;
+      let data;
+
+      try {
+        data = JSON.parse(input);
+      } catch (e) {
+        alert("Invalid JSON input!");
+        return;
+      }
+
+      // Convert strings to numbers where needed and fill missing values
+      const getMedian = (arr, key) => {
+        const nums = arr.map(item => Number(item[key])).filter(n => !isNaN(n));
+        nums.sort((a, b) => a - b);
+        const mid = Math.floor(nums.length / 2);
+        return nums.length % 2 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+      };
+
+      const loanMedian = getMedian(data, "LoanAmount");
+      const termMedian = getMedian(data, "Loan_Amount_Term");
+      const creditMedian = getMedian(data, "Credit_History");
+
+      data = data.map(entry => {
+        if (entry.Dependents === "3+") entry.Dependents = 3;
+
+        entry.LoanAmount = entry.LoanAmount === "" ? loanMedian : Number(entry.LoanAmount);
+        entry.Loan_Amount_Term = entry.Loan_Amount_Term === "" ? termMedian : Number(entry.Loan_Amount_Term);
+        entry.Credit_History = entry.Credit_History === "" ? creditMedian : Number(entry.Credit_History);
+
+        return entry;
+      });
+
+      document.getElementById("outputData").textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
